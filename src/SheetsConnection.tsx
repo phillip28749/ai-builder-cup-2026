@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Leaf, RefreshCw } from "lucide-react";
+import { ExternalLink, Leaf, RefreshCw, Unplug } from "lucide-react";
 import { api } from "./api";
 import type { State } from "./types";
 
@@ -182,7 +182,9 @@ export default function SheetsConnection({
             Renew Google access
           </button>
           <button
-            className="text-button"
+            className="destructive-action"
+            title="Disconnect Google Sheets"
+            aria-label="Disconnect Google Sheets"
             disabled={busy}
             onClick={() =>
               run(async () => {
@@ -191,7 +193,7 @@ export default function SheetsConnection({
               }, "Google Sheets disconnected; your workbook is kept in Drive")
             }
           >
-            Disconnect
+            <Unplug size={15} />
           </button>
           <span>Disconnect stops this app’s sync and keeps your workbook.</span>
         </div>

@@ -340,12 +340,13 @@ export default function Offerings({ s, busy, run, renderArt }: Props) {
                 </button>
                 <button
                   type="button"
-                  className="secondary small-button delete-offering"
+                  className="destructive-action"
+                  title={`Delete ${product.name}`}
                   disabled={busy}
                   aria-label={`Delete ${product.name}`}
                   onClick={() => deleteItem(product)}
                 >
-                  <Trash2 size={14} /> Delete item
+                  <Trash2 size={15} />
                 </button>
                 {s.sheetConnected &&
                   (product.sheetStatus === "error" ||

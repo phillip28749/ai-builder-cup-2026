@@ -1637,9 +1637,26 @@ input[type="color"] {
 .chat-message-body a { text-decoration: underline; }
 .store-product { scroll-margin-top: 24px; }
 .store-product:target { outline: 2px solid #1f5846; outline-offset: 6px; }
-.delete-offering { color: #8d3a2e; border-color: #d9b5ae; }
-.delete-offering:hover:not(:disabled) { background: #fff0ed; border-color: #8d3a2e; }
-.audience-actions { margin-top: 16px; }
+.destructive-action {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 7px;
+  color: #858b87;
+  background: #f3f4f2;
+  border: 1px solid #e5e8e3;
+  border-radius: 7px;
+  flex-shrink: 0;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.destructive-action:is(:hover, :focus-visible):not(:disabled) {
+  color: #b33d32;
+  background: #fff0ed;
+  border-color: #e7b9b2;
+}
+.audience-actions { position: absolute; right: 20px; bottom: 20px; }
+.audience-card { padding-bottom: 62px; }
+.insights-actions { gap: 12px; margin: 16px 0; }
 .message.customer p,
 .message.customer small {
   color: white;

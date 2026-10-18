@@ -1121,10 +1121,12 @@ function ContentStudio({ s, run, busy, showDeveloperSetup }: Props) {
           </p>
           {mediaAssetId && (
             <button
-              className="secondary small-button"
+              className="destructive-action"
+              title="Remove attached visual"
+              aria-label="Remove attached visual"
               onClick={() => setMediaAssetId("")}
             >
-              Remove attached visual
+              <Trash2 size={15} />
             </button>
           )}
         </div>
@@ -1175,10 +1177,11 @@ function Audience({ s, run, busy }: Props) {
               <p className="muted">{a.needs}</p>
               <Badge>OWNER-DEFINED AUDIENCE</Badge>
               <div className="actions audience-actions">
-                <button type="button" className="secondary small-button delete-offering"
+                <button type="button" className="destructive-action"
+                  title={`Remove audience ${a.name}`}
                   disabled={busy} onClick={() => removeAudience(a.id, a.name)}
                   aria-label={`Remove audience ${a.name}`}>
-                  <Trash2 size={14} /> Remove audience
+                  <Trash2 size={15} />
                 </button>
               </div>
             </section>
@@ -1213,6 +1216,7 @@ function Audience({ s, run, busy }: Props) {
             Explore useful ideas based on your brand and audience.
             Recommendations are suggestions, not measured market research.
           </p>
+          <div className="actions insights-actions">
           <button
             disabled={busy}
             onClick={() =>
@@ -1227,10 +1231,12 @@ function Audience({ s, run, busy }: Props) {
             <Sparkles size={16} />
             {busy ? "Thinking…" : "Explore ideas"}
           </button>
-          {result && <button type="button" className="secondary small-button delete-offering"
+          {result && <button type="button" className="destructive-action"
+            title="Clear insights" aria-label="Clear insights"
             disabled={busy} onClick={clearInsights}>
-            <Trash2 size={14} /> Clear insights
+            <Trash2 size={15} />
           </button>}
+          </div>
           {source && <p className="source">{source}</p>}
           {result ? (
             <ChatMessage text={result} className="insights-markdown" />

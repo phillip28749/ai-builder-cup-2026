@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Trash2, Unplug } from "lucide-react";
 import { api } from "./api";
 import type { State } from "./types";
 type Knowledge = {
@@ -177,7 +178,9 @@ export default function BrandBrain({ s }: { s: State }) {
             </summary>
             <pre>{doc.text}</pre>
             <button
-              className="secondary small-button"
+              className="destructive-action"
+              title={`Remove document ${doc.name}`}
+              aria-label={`Remove document ${doc.name}`}
               disabled={busy}
               onClick={() =>
                 act(() =>
@@ -189,7 +192,7 @@ export default function BrandBrain({ s }: { s: State }) {
                 )
               }
             >
-              Remove document
+              <Trash2 size={15} />
             </button>
           </details>
         ))}
@@ -232,12 +235,14 @@ export default function BrandBrain({ s }: { s: State }) {
               </button>
               <button
                 disabled={busy}
-                className="secondary small-button"
+                className="destructive-action"
+                title="Disconnect Facebook Page"
+                aria-label="Disconnect Facebook Page"
                 onClick={() =>
                   act(() => api("/owner/facebook", undefined, "DELETE"))
                 }
               >
-                Disconnect Page
+                <Unplug size={15} />
               </button>
             </div>
           </>
