@@ -26,6 +26,7 @@ import { mountKnowledgeRoutes } from "./knowledge-routes.js";
 import { brandContext } from "./brand-knowledge.js";
 import { browserSession } from "./session-cookie.js";
 import { showDeveloperSetup } from "./ui-config.js";
+import { allowedRequestOrigin } from "./request-origin.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -38,9 +39,13 @@ if (process.env.K_SERVICE && (!cloud || !process.env.SESSION_SECRET))
 app.use((req, res, next) => {
   res.setHeader("X-Content-Type-Options", "nosniff");
   res.setHeader("Referrer-Policy", "same-origin");
-  if (req.method !== "GET" && req.headers.origin) {
-    const origin = new URL(req.headers.origin);
-    if (origin.host !== req.headers.host && origin.origin !== process.env.PUBLIC_ORIGIN) {
+  if (!["GET", "HEAD"].includes(req.method) && req.headers.origin) {
+    if (!allowedRequestOrigin(req.headers.origin, req.headers.host,
+      process.env.K_SERVICE ? "https" : req.protocol, {
+        publicOrigin: process.env.PUBLIC_ORIGIN,
+        firebaseWebConfig: process.env.FIREBASE_WEB_CONFIG,
+        cloudProject: process.env.GOOGLE_CLOUD_PROJECT,
+      })) {
       res.status(403).json({ error: "Cross-origin request blocked" });
       return;
     }

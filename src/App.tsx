@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import {
   Link,
   NavLink,
@@ -34,6 +34,7 @@ import {
   ShoppingBag,
   Clock,
   Copy,
+  Upload,
   LogOut,
 } from "lucide-react";
 import { api, configureAuth, logout } from "./api";
@@ -618,13 +619,50 @@ function StoreSettings({ s, run, busy }: Props) {
   const [heroPhotos, setHeroPhotos] = useState<MediaAsset[]>([]);
   const [heroPhotoError, setHeroPhotoError] = useState("");
   const [heroLoading, setHeroLoading] = useState(true);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [heroUploadError, setHeroUploadError] = useState("");
+  const [heroUploadNotice, setHeroUploadNotice] = useState("");
   const [libraryRevision, setLibraryRevision] = useState(0);
+  async function uploadHeroPhoto(event: ChangeEvent<HTMLInputElement>) {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    setHeroUploading(true);
+    setHeroUploadError("");
+    setHeroUploadNotice("");
+    try {
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+        file.size > 4 * 1024 * 1024 || file.size === 0)
+        throw new Error("Choose a JPEG, PNG, or WebP photo up to 4 MB.");
+      const data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result).split(",")[1]);
+        reader.onerror = () => reject(new Error("Could not read the selected photo."));
+        reader.readAsDataURL(file);
+      });
+      const asset = await api<MediaAsset>("/owner/media/upload", {
+        name: file.name.slice(0, 120), mimeType: file.type, data,
+      });
+      setHeroPhotos((photos) => [asset, ...photos.filter((photo) => photo.id !== asset.id)]);
+      setHeroPhotoError("");
+      setB((brand) => ({ ...brand, heroAssetId: asset.id }));
+      setHeroUploadNotice("Photo uploaded and selected. Save settings to publish it on your storefront.");
+    } catch (error) {
+      setHeroUploadError((error as Error).message);
+    } finally {
+      setHeroUploading(false);
+      input.value = "";
+    }
+  }
   useEffect(() => {
     let active = true;
     setHeroLoading(true);
     setHeroPhotoError("");
     api<{ assets: MediaAsset[] }>("/owner/media")
-      .then(({ assets }) => { if (active) setHeroPhotos(assets.filter((a) => a.kind !== "video")); })
+      .then(({ assets }) => { if (active) setHeroPhotos((photos) => {
+        const images = assets.filter((a) => a.kind !== "video");
+        return [...photos.filter((photo) => !images.some((a) => a.id === photo.id)), ...images];
+      }); })
       .catch((e) => { if (active) setHeroPhotoError(e.message); })
       .finally(() => { if (active) setHeroLoading(false); });
     return () => { active = false; };
@@ -645,7 +683,7 @@ function StoreSettings({ s, run, busy }: Props) {
         action={
           <button
             hidden={settingsTab !== "identity"}
-            disabled={busy || !b.name.trim() || b.name.trim() === "Your brand"}
+            disabled={busy || heroUploading || !b.name.trim() || b.name.trim() === "Your brand"}
             onClick={() =>
               run(
                 () =>
@@ -767,11 +805,20 @@ function StoreSettings({ s, run, busy }: Props) {
           </div>
           <section className="panel storefront-hero-settings">
             <h2>Storefront hero photo</h2>
-            <p className="caption-note">Choose the large photo on your storefront home page. This is separate from product photos and will be publicly visible after you save settings.</p>
+            <p className="caption-note">Upload a new photo or choose one from your library for the storefront home page. It will be publicly visible after you save settings.</p>
+            <label className={"upload-zone" + (busy || heroUploading ? " disabled" : "")}>
+              <Upload size={24} />
+              <strong>{heroUploading ? "Uploading hero photo..." : "Upload a hero photo"}</strong>
+              <small>JPEG, PNG, WebP · up to 4 MB. Also saved to your library.</small>
+              <input type="file" accept="image/jpeg,image/png,image/webp" aria-label="Upload a storefront hero photo"
+                disabled={busy || heroUploading} onChange={uploadHeroPhoto} />
+            </label>
+            {heroUploadError && <p role="alert" className="error">{heroUploadError}</p>}
+            {heroUploadNotice && <p role="status" className="caption-note">{heroUploadNotice}</p>}
             {heroLoading ? <p role="status">Loading photo library...</p> : heroPhotoError ? <p role="alert">{heroPhotoError}</p> : (
-              <AssetPicker label="Hero photo" value={b.heroAssetId || ""} assets={heroPhotos} onChange={(id) => update("heroAssetId", id)} allowNone emptyLabel="Use first product photo" disabled={busy} />
+              <AssetPicker label="Hero photo from library" value={b.heroAssetId || ""} assets={heroPhotos} onChange={(id) => { update("heroAssetId", id); setHeroUploadNotice(""); }} allowNone emptyLabel="Use first product photo" disabled={busy || heroUploading} />
             )}
-            <button type="button" className="secondary small-button" disabled={busy || heroLoading} onClick={() => setLibraryRevision((value) => value + 1)}>Reload library</button>
+            <button type="button" className="secondary small-button" disabled={busy || heroLoading || heroUploading} onClick={() => setLibraryRevision((value) => value + 1)}>Reload library</button>
             <Field label="Hero image display">
               <select value={b.heroImageFit || "cover"} onChange={(e) => update("heroImageFit", e.target.value)} disabled={busy}>
                 <option value="cover">Fill frame (may crop image)</option>
