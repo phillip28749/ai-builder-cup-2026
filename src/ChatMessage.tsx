@@ -6,13 +6,15 @@ export default function ChatMessage({
   text,
   allowedLinks,
   onNavigate,
+  className = "",
 }: {
   text: string;
   allowedLinks?: string[];
   onNavigate?: () => void;
+  className?: string;
 }) {
   return (
-    <div className="chat-message-body">
+    <div className={`chat-message-body ${className}`}>
       <Markdown
         skipHtml
         allowedElements={[

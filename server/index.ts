@@ -16,6 +16,7 @@ import {
   configuredSheetId,
   syncOffering,
   syncCatalog,
+  removeOfferingFromSheet,
 } from "./sheets.js";
 import { validateOrder, canConfirm } from "./domain.js";
 import type { Order, Message } from "../src/types.js";
@@ -203,6 +204,31 @@ app.post(
     res.json({ ok: true });
   }),
 );
+app.delete(
+  "/api/owner/audiences/:id",
+  wrap(async (req, res) => {
+    await locked(async () => {
+      const s = await load();
+      s.audiences = s.audiences.filter((audience) => audience.id !== req.params.id);
+      // Preserve drafts and schedules while removing their deleted audience link.
+      for (const content of s.content)
+        if (content.audienceId === req.params.id) content.audienceId = "";
+      await save(s);
+    });
+    res.json({ ok: true });
+  }),
+);
+app.delete(
+  "/api/owner/insights",
+  wrap(async (_req, res) => {
+    await locked(async () => {
+      const s = await load();
+      s.insights = "";
+      await save(s);
+    });
+    res.json({ ok: true });
+  }),
+);
 app.post(
   "/api/owner/generate",
   wrap(async (req, res) => {
@@ -374,6 +400,27 @@ app.post(
       return product;
     });
     res.json(result);
+  }),
+);
+app.delete(
+  "/api/owner/products/:id",
+  wrap(async (req, res) => {
+    await locked(async () => {
+      const s = await load();
+      const product = s.products.find((p) => p.id === req.params.id);
+      if (!product) return;
+      if (s.orders.some((order) => order.productId === product.id &&
+        ["pending", "needs-review"].includes(order.status)))
+        throw new Error("Resolve this item's pending or needs-review orders before deleting it.");
+      // Finish the external update before removing the item locally. Retrying is
+      // safe if the Sheet write succeeded but the workspace save was interrupted.
+      try { await removeOfferingFromSheet(product.id); } catch {
+        throw new Error("Item was not deleted from your studio because the Sheet update could not be verified. Check the connection and workbook, then retry deletion before syncing.");
+      }
+      s.products = s.products.filter((p) => p.id !== product.id);
+      await save(s);
+    });
+    res.json({ ok: true });
   }),
 );
 app.patch(

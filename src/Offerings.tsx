@@ -5,7 +5,7 @@ import {
   type ReactNode,
   type FormEvent,
 } from "react";
-import { Plus, Leaf, RefreshCw, Image } from "lucide-react";
+import { Plus, Leaf, RefreshCw, Image, Trash2 } from "lucide-react";
 import { api } from "./api";
 import AssetPicker from "./AssetPicker";
 import ProductPhoto from "./ProductPhoto";
@@ -93,6 +93,22 @@ export default function Offerings({ s, busy, run, renderArt }: Props) {
         ),
       "Offering saved. Sheet sync status is shown on its card.",
     );
+  }
+  async function deleteItem(product: Product) {
+    if (
+      !window.confirm(
+        `Delete "${product.name}" from your storefront${s.sheetConnected ? " and its Products/BranchStock rows in Google Sheets" : ""}? Existing order history and library photos will be kept.`,
+      )
+    )
+      return;
+    await run(async () => {
+      await api(
+        `/owner/products/${encodeURIComponent(product.id)}`,
+        undefined,
+        "DELETE",
+      );
+      if (photoProduct === product.id) setPhotoProduct("");
+    }, "Item deleted from your store and connected inventory.");
   }
   return (
     <>
@@ -322,6 +338,15 @@ export default function Offerings({ s, busy, run, renderArt }: Props) {
                 <button className="secondary small-button" disabled={busy}>
                   Save offering
                 </button>
+                <button
+                  type="button"
+                  className="secondary small-button delete-offering"
+                  disabled={busy}
+                  aria-label={`Delete ${product.name}`}
+                  onClick={() => deleteItem(product)}
+                >
+                  <Trash2 size={14} /> Delete item
+                </button>
                 {s.sheetConnected &&
                   (product.sheetStatus === "error" ||
                     product.sheetStatus === "pending") && (
@@ -345,6 +370,12 @@ export default function Offerings({ s, busy, run, renderArt }: Props) {
           </section>
         ))}
       </div>
+      {!s.products.length && (
+        <div className="empty">
+          <Leaf size={25} />
+          <p>No offerings yet. Add an item to start your collection.</p>
+        </div>
+      )}
     </>
   );
 }

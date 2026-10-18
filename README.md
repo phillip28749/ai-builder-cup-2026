@@ -103,6 +103,8 @@ Google sign-in does not connect Sheets automatically. The operator configures th
 
 Customer Hub supports **Add new item**, **Save offering**, workbook sync, and replacing offering photos from the library. Photo assignments remain in workspace storage. Without Sheets, changes remain in local/Firestore records.
 
+**Delete item** asks for confirmation, then removes the offering from the storefront and its Products/BranchStock rows when Sheets is connected. Order history and library photos are retained. Pending or needs-review orders must be resolved first. If a Sheet deletion cannot be verified, the item remains in the studio for a deletion retry.
+
 See [Google Sheets setup](GOOGLE_SHEETS_SETUP.md) for API access, consent, and callbacks.
 
 ## Storage and AI usage

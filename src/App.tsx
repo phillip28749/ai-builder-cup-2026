@@ -35,6 +35,7 @@ import {
   Clock,
   Copy,
   Upload,
+  Trash2,
   LogOut,
 } from "lucide-react";
 import { api, configureAuth, logout } from "./api";
@@ -1134,6 +1135,19 @@ function ContentStudio({ s, run, busy, showDeveloperSetup }: Props) {
 function Audience({ s, run, busy }: Props) {
   const [result, setResult] = useState(s.insights);
   const [source, setSource] = useState("");
+  useEffect(() => { setResult(s.insights); }, [s.insights]);
+  async function removeAudience(id: string, name: string) {
+    if (!window.confirm(`Remove "${name}"? Saved posts and calendar schedules will be kept, with this audience unlinked.`)) return;
+    await run(() => api(`/owner/audiences/${encodeURIComponent(id)}`, undefined, "DELETE"), "Audience removed");
+  }
+  async function clearInsights() {
+    if (!window.confirm("Remove the saved insights? You can generate new suggestions later.")) return;
+    await run(async () => {
+      await api("/owner/insights", undefined, "DELETE");
+      setResult("");
+      setSource("");
+    }, "Insights removed");
+  }
   async function add(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
@@ -1160,6 +1174,13 @@ function Audience({ s, run, busy }: Props) {
               <div className="eyebrow">WHAT MATTERS TO THEM</div>
               <p className="muted">{a.needs}</p>
               <Badge>OWNER-DEFINED AUDIENCE</Badge>
+              <div className="actions audience-actions">
+                <button type="button" className="secondary small-button delete-offering"
+                  disabled={busy} onClick={() => removeAudience(a.id, a.name)}
+                  aria-label={`Remove audience ${a.name}`}>
+                  <Trash2 size={14} /> Remove audience
+                </button>
+              </div>
             </section>
           ))}
           <section className="panel">
@@ -1206,9 +1227,13 @@ function Audience({ s, run, busy }: Props) {
             <Sparkles size={16} />
             {busy ? "Thinking…" : "Explore ideas"}
           </button>
+          {result && <button type="button" className="secondary small-button delete-offering"
+            disabled={busy} onClick={clearInsights}>
+            <Trash2 size={14} /> Clear insights
+          </button>}
           {source && <p className="source">{source}</p>}
           {result ? (
-            <div className="prose">{result}</div>
+            <ChatMessage text={result} className="insights-markdown" />
           ) : (
             <Empty>A fresh perspective on your next story.</Empty>
           )}

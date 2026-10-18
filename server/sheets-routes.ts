@@ -140,6 +140,14 @@ export function mountSheetsRoutes(app: Express) {
         throw new Error(
           "Google Sheets needs one-time app setup. See the connection guide below.",
         );
+      // Host-only session cookies cannot follow consent across Firebase aliases.
+      // Move to the configured callback origin before issuing state or a cookie.
+      const callbackOrigin = new URL(process.env.GOOGLE_OAUTH_REDIRECT_URI!).origin;
+      const requestOrigin = _req.get("origin");
+      if (requestOrigin && requestOrigin !== callbackOrigin) {
+        res.json({ url: new URL("/customers?sheets=reconnect", callbackOrigin).href });
+        return;
+      }
       const nonce = randomBytes(32).toString("base64url");
       const cookie = browserSession(_req, res).token;
       const auth = oauthClient();
@@ -212,11 +220,7 @@ export function mountSheetsRoutes(app: Express) {
       extra ||
       !cookie
     ) {
-      res
-        .status(400)
-        .send(
-          "Connection expired or invalid. Return to Customer Hub and connect again.",
-        );
+      res.redirect("/customers?sheets=expired");
       return;
     }
     workspaceContext.run({ id }, () => {
@@ -228,11 +232,7 @@ export function mountSheetsRoutes(app: Express) {
           pending.expires < Date.now() ||
           pending.hash !== digest(nonce + cookie)
         ) {
-          res
-            .status(400)
-            .send(
-              "Connection expired or invalid. Return to Customer Hub and connect again.",
-            );
+          res.redirect("/customers?sheets=expired");
           return;
         }
         delete connection.pending;

@@ -131,6 +131,19 @@ export default function SheetsConnection({
           ready.
         </p>
       )}
+      {outcome === "reconnect" && (
+        <p role="status" className="connection-message">
+          You are on the secure connection address. Click Connect Google Sheets
+          to continue with the same Google account. Your existing workbook is retained.
+        </p>
+      )}
+      {outcome === "expired" && (
+        <p role="alert" className="connection-message">
+          This connection attempt expired or its browser session was unavailable.
+          Click Connect Google Sheets to start a fresh attempt in this tab, then
+          complete Google authorization within 10 minutes. Your workbook has not been deleted.
+        </p>
+      )}
       {(error || status?.error) && (
         <p role="alert" className="connection-message">
           {error || status?.error}

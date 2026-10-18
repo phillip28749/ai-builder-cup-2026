@@ -114,6 +114,57 @@ export async function syncCatalog(state: State) {
   for (const product of state.products) await syncOffering(product);
   return state.products.some((p) => p.sheetStatus === "error");
 }
+// Remove only this product's rows; retain headers, other products and order history.
+export async function removeOfferingFromSheet(productId: string) {
+  const spreadsheetId = sheetId();
+  if (!spreadsheetId) return;
+  const api = await client();
+  const [metadata, values] = await Promise.all([
+    api.spreadsheets.get({ spreadsheetId, fields: "sheets.properties" }),
+    api.spreadsheets.values.batchGet({
+      spreadsheetId,
+      ranges: ["Products!A2:D", "BranchStock!A2:C"],
+    }),
+  ]);
+  const requests: {
+    deleteDimension: {
+      range: {
+        sheetId: number;
+        dimension: "ROWS";
+        startIndex: number;
+        endIndex: number;
+      };
+    };
+  }[] = [];
+  for (const [index, title] of ["Products", "BranchStock"].entries()) {
+    const tab = metadata.data.sheets?.find(
+      (sheet) => sheet.properties?.title === title,
+    );
+    const tabId = tab?.properties?.sheetId;
+    if (tabId === undefined || tabId === null)
+      throw new Error(`Missing ${title} tab.`);
+    const rows = values.data.valueRanges?.[index]?.values || [];
+    // Delete from the bottom so earlier row positions remain stable in this batch.
+    for (let row = rows.length - 1; row >= 0; row--) {
+      if (rows[row][0] !== productId) continue;
+      requests.push({
+        deleteDimension: {
+          range: {
+            sheetId: tabId,
+            dimension: "ROWS",
+            startIndex: row + 1,
+            endIndex: row + 2,
+          },
+        },
+      });
+    }
+  }
+  if (requests.length)
+    await api.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: { requests },
+    });
+}
 export async function recordOrder(order: Order) {
   if (!sheetId()) return "sample";
   const api = await client();

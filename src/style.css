@@ -1453,6 +1453,25 @@ input[type="color"] {
   margin: 25px 0;
   color: #4f6549;
 }
+.insights-panel .insights-markdown {
+  margin: 25px 0;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #4f6549;
+}
+.insights-panel .insights-markdown p { font-size: inherit; line-height: inherit; margin: 10px 0; }
+.insights-panel .insights-markdown :is(h1, h2, h3, h4) {
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.4;
+  margin: 24px 0 12px;
+}
+.insights-panel .insights-markdown :is(h1, h2, h3, h4):not(:first-child) {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.insights-panel .insights-markdown li { margin: 10px 0; }
+.insights-panel .insights-markdown strong { color: var(--ink); }
 .activity-metrics {
   display: flex;
   gap: 22px;
@@ -1618,6 +1637,9 @@ input[type="color"] {
 .chat-message-body a { text-decoration: underline; }
 .store-product { scroll-margin-top: 24px; }
 .store-product:target { outline: 2px solid #1f5846; outline-offset: 6px; }
+.delete-offering { color: #8d3a2e; border-color: #d9b5ae; }
+.delete-offering:hover:not(:disabled) { background: #fff0ed; border-color: #8d3a2e; }
+.audience-actions { margin-top: 16px; }
 .message.customer p,
 .message.customer small {
   color: white;
