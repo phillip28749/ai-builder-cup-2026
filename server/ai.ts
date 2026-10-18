@@ -1,14 +1,14 @@
 import { GoogleGenAI } from "@google/genai";
 import { recordUsage } from "./usage.js";
+const textModel = () =>
+  process.env.GEMINI_MODEL?.trim() || "gemini-3.1-flash-lite";
 export const aiConfigured = () =>
-  Boolean(
-    (process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_PROJECT) &&
-    process.env.GEMINI_MODEL,
-  );
+  Boolean(process.env.GEMINI_API_KEY || process.env.GOOGLE_CLOUD_PROJECT);
 export async function generate(
   prompt: string,
   fallback: string,
   feature = "text",
+  systemInstruction?: string,
 ): Promise<{ text: string; source: string }> {
   if (!aiConfigured())
     return {
@@ -16,6 +16,7 @@ export async function generate(
       source: "Sample response · Gemini not configured",
     };
   let recorded = false;
+  const model = textModel();
   try {
     const ai = process.env.GEMINI_API_KEY
       ? new GoogleGenAI({
@@ -29,11 +30,11 @@ export async function generate(
           httpOptions: { timeout: 25000 },
         });
     const result = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL!,
+      model,
       contents: prompt,
-      config: { temperature: 0.5, maxOutputTokens: 1800 },
+      config: { temperature: 0.5, maxOutputTokens: 1800, systemInstruction },
     });
-    await recordUsage(feature, process.env.GEMINI_MODEL!, result.usageMetadata);
+    await recordUsage(feature, model, result.usageMetadata);
     recorded = true;
     if (!result.text?.trim()) throw new Error("Empty AI response");
     return { text: result.text, source: "Live Gemini" };
@@ -41,7 +42,7 @@ export async function generate(
     if (!recorded)
       await recordUsage(
         feature,
-        process.env.GEMINI_MODEL!,
+        model,
         undefined,
         "failed or response unavailable",
       );

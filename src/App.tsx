@@ -46,6 +46,7 @@ import ContentLibrary from "./ContentLibrary";
 import SheetsConnection from "./SheetsConnection";
 import Offerings from "./Offerings";
 import ProductPhoto from "./ProductPhoto";
+import ChatMessage from "./ChatMessage";
 import AssetPicker from "./AssetPicker";
 import Calendar from "./Calendar";
 import MediaStudio, { MediaView } from "./MediaStudio";
@@ -1371,7 +1372,7 @@ function Customers({ s, run, busy, showDeveloperSetup }: Props) {
                             ? "Store owner"
                             : "Customer"}
                       </small>
-                      <p>{m.text}</p>
+                      {m.role === "assistant" ? <ChatMessage text={m.text} /> : <p>{m.text}</p>}
                       {m.source && <small>{m.source}</small>}
                     </div>
                   ))}
@@ -1451,6 +1452,13 @@ function PublicStore({ config }: { config?: Config }) {
   const storePath = location.pathname.split("/").slice(0, 3).join("/");
   const campaignId = params.get("c") || "";
   const suffix = campaignId ? "?c=" + encodeURIComponent(campaignId) : "";
+  useEffect(() => {
+    if (!isProducts || !location.hash || !store) return;
+    let target: string;
+    try { target = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    if (!target.startsWith("product-")) return;
+    document.getElementById(target)?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [isProducts, location.hash, store?.products.length]);
   useEffect(() => {
     if (legacyChat) {
       setChatOpen(true);
@@ -1630,7 +1638,7 @@ function PublicStore({ config }: { config?: Config }) {
           </section>
           <div className="product-grid store-products">
             {store.products.map((p: any) => (
-              <article className="store-product" key={p.id}>
+              <article className="store-product" key={p.id} id={"product-" + p.id}>
                 <ProductPhoto product={p} publicView fallback={<Art kind={p.image} />} />
                 <div className="product-title">
                   <h3>{p.name}</h3>
@@ -1730,6 +1738,10 @@ function PublicStore({ config }: { config?: Config }) {
                   ? "AI-assisted - Gemini"
                   : "Sample AI - Gemini not configured"}
             </span>
+            <Link className="secondary small-button" to={storePath + "/products" + suffix}
+              onClick={() => setChatOpen(false)}>
+              Browse products <ArrowRight size={14} />
+            </Link>
             <button
               className="secondary small-button"
               disabled={!store.products.length}
@@ -1759,7 +1771,10 @@ function PublicStore({ config }: { config?: Config }) {
                       ? "STORE OWNER"
                       : "STUDIO ASSISTANT"}
                 </small>
-                <p>{m.text}</p>
+                {m.role === "assistant" ? <ChatMessage text={m.text}
+                  allowedLinks={store.products.map((p: any) => `${storePath}/products#product-${encodeURIComponent(p.id)}`)}
+                  onNavigate={() => setChatOpen(false)}
+                /> : <p>{m.text}</p>}
                 {m.source && <small>{m.source}</small>}
               </div>
             ))}
