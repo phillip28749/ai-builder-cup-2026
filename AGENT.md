@@ -2,7 +2,7 @@
 
 ## Project context
 
-This repository contains a hackathon proof of concept for AsensoPost Studio. Keep implementation decisions aligned with the high-level constraints below and the detailed specifications linked here.
+This repository contains a hackathon proof of concept for Asenso One Studio. Keep implementation decisions aligned with the high-level constraints below and the detailed specifications linked here.
 
 ## General instructions
 

@@ -179,3 +179,17 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# AsensoPost prototype
+node_modules/
+dist-server/
+.data/
+test-results/
+playwright-report/
+.env*
+!.env.example
+tmp/
+.firebase/
+firebase-debug.log*
+deployment.local.json
+output/

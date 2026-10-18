@@ -1,0 +1,13 @@
+.git
+node_modules
+.data
+.env*
+dist
+dist-server
+user input
+test-results
+playwright-report
+output
+.firebase
+firebase-debug.log*
+deployment.local.json
