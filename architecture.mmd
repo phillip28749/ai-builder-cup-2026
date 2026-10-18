@@ -1,0 +1,29 @@
+flowchart TB
+    owner["Business owner / creator"]
+    customer["Storefront customer"]
+    subgraph project["Google Cloud / Firebase project"]
+        hosting["Firebase Hosting + CDN<br/>React / TypeScript frontend<br/>Workspace and public storefront"]
+        auth["Firebase Authentication<br/>Google sign-in"]
+        api["Cloud Run: Node.js / Express API<br/>Brand context, content and media<br/>Calendar, retail ops, customer chat<br/>Usage recording and access checks"]
+        db[("Cloud Firestore<br/>Workspace and private records<br/>Media/job metadata")]
+        media[("Private Cloud Storage<br/>Uploaded photos<br/>Generated images and videos")]
+        secrets["Secret Manager<br/>Server keys and encryption secret"]
+    end
+    ai["Google AI via Gemini API<br/>Flash-Lite: text and chat<br/>Flash Image: photo / ad creative<br/>Veo Lite: video"]
+    oauth["Google OAuth consent<br/>Separate Sheets permission"]
+    sheets[("User-owned Google Sheets<br/>Products / BranchStock / Orders")]
+    facebook["Optional Meta Graph API<br/>Read-only Page context"]
+    owner --> hosting
+    customer --> hosting
+    hosting -->|"Owner sign-in"| auth
+    hosting -->|"/api/** rewrite<br/>Owner ID token / customer session"| api
+    api -.->|"Verify owner ID tokens"| auth
+    api <-->|"Scoped workspace data<br/>and brand source text"| db
+    api <-->|"Authenticated media reads<br/>and generated media writes"| media
+    secrets -->|"Runtime secret bindings"| api
+    api -->|"Grounded prompt + selected references"| ai
+    ai -->|"Generated content / video operation"| api
+    api -->|"Start Sheets authorization"| oauth
+    oauth -->|"Callback through Firebase Hosting"| hosting
+    api <-->|"Authorized workbook sync"| sheets
+    facebook -.->|"Imported Page text"| api
